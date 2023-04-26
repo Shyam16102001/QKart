@@ -271,33 +271,30 @@ const Checkout = () => {
    * }
    */
   const addAddress = async (token, newAddress) => {
-    //check whether newAddress text is present in as reservation id
     if (newAddress.isAddingNewAddress === 'QTrip ID') {
-      for (let index = 0; index < reservations.length; index++) {
-        if (reservations[index].id === newAddress.value) {
-          newAddress.value =
-            'QTrip Resort - ' + reservations[index].adventureName;
-        } else {
-          enqueueSnackbar('Reservation id not found', { variant: 'error' });
-          return;
-        }
+      const reservation = reservations.find(
+        (reservation) => reservation.id === newAddress.value
+      );
+      if (!reservation) {
+        enqueueSnackbar('Reservation id not found', { variant: 'error' });
+        return;
       }
+      newAddress.value = `QTrip Resort - ${reservation.adventureName}`;
     }
     try {
-      // TODO: CRIO_TASK_MODULE_CHECKOUT - Add new address to the backend and display the latest list of addresses
       const response = await axios.post(
         `${config.endpoint}/user/addresses`,
         { address: newAddress.value },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            ContentType: 'application/json',
+            'Content-Type': 'application/json',
           },
         }
       );
-      setAddresses({ ...addresses, all: response.data });
-      setNewAddress((currNewAddress) => ({
-        ...currNewAddress,
+      setAddresses((addresses) => ({ ...addresses, all: response.data }));
+      setNewAddress((newAddress) => ({
+        ...newAddress,
         isAddingNewAddress: '',
       }));
     } catch (e) {
@@ -306,9 +303,7 @@ const Checkout = () => {
       } else {
         enqueueSnackbar(
           'Could not add this address. Check that the backend is running, reachable and returns valid JSON.',
-          {
-            variant: 'error',
-          }
+          { variant: 'error' }
         );
       }
     }
@@ -537,7 +532,6 @@ const Checkout = () => {
 
   return (
     <>
-      {console.log(reservations)}
       <Header />
       <Grid container>
         <Grid item xs={12} md={9}>

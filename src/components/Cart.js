@@ -3,12 +3,12 @@ import {
   RemoveOutlined,
   ShoppingCart,
   ShoppingCartOutlined,
-} from "@mui/icons-material";
-import { Button, IconButton, Stack } from "@mui/material";
-import { Box } from "@mui/system";
-import React from "react";
-import { useHistory } from "react-router-dom";
-import "./Cart.css";
+} from '@mui/icons-material';
+import { Button, IconButton, Stack } from '@mui/material';
+import { Box } from '@mui/system';
+import React from 'react';
+import { useHistory } from 'react-router-dom';
+import './Cart.css';
 
 // Definition of Data Structures used
 /**
@@ -130,7 +130,7 @@ const ItemQuantity = ({ value, handleAdd, handleDelete, isReadOnly }) => {
           <RemoveOutlined />
         </IconButton>
       )}
-      {isReadOnly && <p>Qty:</p>}
+      {isReadOnly && <span>Qty:</span>}
       <Box padding="0.5rem" data-testid="item-qty">
         {value}
       </Box>
@@ -161,7 +161,7 @@ const ItemQuantity = ({ value, handleAdd, handleDelete, isReadOnly }) => {
  */
 
 const Cart = ({ products, items = [], handleQuantity, isReadOnly }) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem('token');
   const history = useHistory();
   let ishidden = isReadOnly;
 
@@ -263,7 +263,7 @@ const Cart = ({ products, items = [], handleQuantity, isReadOnly }) => {
               className="checkout-btn"
               onClick={() =>
                 history.push({
-                  pathname: "/checkout",
+                  pathname: '/checkout',
                   state: { items: items, products: products },
                 })
               }
