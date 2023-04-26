@@ -1,4 +1,4 @@
-import { CreditCard, Delete } from "@mui/icons-material";
+import { CreditCard, Delete } from '@mui/icons-material';
 import {
   Button,
   Divider,
@@ -6,17 +6,17 @@ import {
   Stack,
   TextField,
   Typography,
-} from "@mui/material";
-import { Box } from "@mui/system";
-import axios from "axios";
-import { useSnackbar } from "notistack";
-import React, { useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
-import { config } from "../App";
-import Cart, { getTotalCartValue, generateCartItemsFrom } from "./Cart";
-import "./Checkout.css";
-import Footer from "./Footer";
-import Header from "./Header";
+} from '@mui/material';
+import { Box } from '@mui/system';
+import axios from 'axios';
+import { useSnackbar } from 'notistack';
+import React, { useEffect, useState } from 'react';
+import { useHistory } from 'react-router-dom';
+import { config } from '../App';
+import Cart, { getTotalCartValue, generateCartItemsFrom } from './Cart';
+import './Checkout.css';
+import Footer from './Footer';
+import Header from './Header';
 
 // Definition of Data Structures used
 /**
@@ -94,7 +94,9 @@ const AddNewAddressView = ({
       <TextField
         multiline
         minRows={4}
-        placeholder="Enter your complete address"
+        // placeholder="Enter your complete"
+        placeholder={'Enter your complete ' + newAddress.isAddingNewAddress}
+        // placeholder={placeholder}
         onChange={(e) => {
           handleNewAddress({
             ...newAddress,
@@ -103,20 +105,21 @@ const AddNewAddressView = ({
         }}
         // value={newAddress.value}
       />
-      <Stack
-        direction="row"
-        my="1rem"
-        onClick={() => {
-          addAddress(token, newAddress.value);
-        }}
-      >
-        <Button variant="contained">Add</Button>
+      <Stack direction="row" my="1rem">
+        <Button
+          variant="contained"
+          onClick={() => {
+            addAddress(token, newAddress);
+          }}
+        >
+          Add
+        </Button>
         <Button
           variant="text"
           onClick={() => {
             handleNewAddress({
               ...newAddress,
-              isAddingNewAddress: false,
+              isAddingNewAddress: '',
             });
           }}
         >
@@ -128,16 +131,17 @@ const AddNewAddressView = ({
 };
 
 const Checkout = () => {
-  const token = localStorage.getItem("token");
-  const balance = localStorage.getItem("balance");
+  const token = localStorage.getItem('token');
+  const balance = localStorage.getItem('balance');
   const history = useHistory();
   const { enqueueSnackbar } = useSnackbar();
   const [items, setItems] = useState([]);
   const [products, setProducts] = useState([]);
-  const [addresses, setAddresses] = useState({ all: [], selected: "" });
+  const [reservations, setReservations] = useState([]);
+  const [addresses, setAddresses] = useState({ all: [], selected: '' });
   const [newAddress, setNewAddress] = useState({
-    isAddingNewAddress: false,
-    value: "",
+    isAddingNewAddress: '',
+    value: '',
   });
 
   // Fetch the entire products list
@@ -149,13 +153,13 @@ const Checkout = () => {
       return response.data;
     } catch (e) {
       if (e.response && e.response.status === 500) {
-        enqueueSnackbar(e.response.data.message, { variant: "error" });
+        enqueueSnackbar(e.response.data.message, { variant: 'error' });
         return null;
       } else {
         enqueueSnackbar(
-          "Could not fetch products. Check that the backend is running, reachable and returns valid JSON.",
+          'Could not fetch products. Check that the backend is running, reachable and returns valid JSON.',
           {
-            variant: "error",
+            variant: 'error',
           }
         );
       }
@@ -175,9 +179,9 @@ const Checkout = () => {
       return response.data;
     } catch {
       enqueueSnackbar(
-        "Could not fetch cart details. Check that the backend is running, reachable and returns valid JSON.",
+        'Could not fetch cart details. Check that the backend is running, reachable and returns valid JSON.',
         {
-          variant: "error",
+          variant: 'error',
         }
       );
       return null;
@@ -223,9 +227,9 @@ const Checkout = () => {
       return response.data;
     } catch {
       enqueueSnackbar(
-        "Could not fetch addresses. Check that the backend is running, reachable and returns valid JSON.",
+        'Could not fetch addresses. Check that the backend is running, reachable and returns valid JSON.',
         {
-          variant: "error",
+          variant: 'error',
         }
       );
       return null;
@@ -267,31 +271,43 @@ const Checkout = () => {
    * }
    */
   const addAddress = async (token, newAddress) => {
+    //check whether newAddress text is present in as reservation id
+    if (newAddress.isAddingNewAddress === 'QTrip ID') {
+      for (let index = 0; index < reservations.length; index++) {
+        if (reservations[index].id === newAddress.value) {
+          newAddress.value =
+            'QTrip Resort - ' + reservations[index].adventureName;
+        } else {
+          enqueueSnackbar('Reservation id not found', { variant: 'error' });
+          return;
+        }
+      }
+    }
     try {
       // TODO: CRIO_TASK_MODULE_CHECKOUT - Add new address to the backend and display the latest list of addresses
       const response = await axios.post(
         `${config.endpoint}/user/addresses`,
-        { address: newAddress },
+        { address: newAddress.value },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            ContentType: "application/json",
+            ContentType: 'application/json',
           },
         }
       );
       setAddresses({ ...addresses, all: response.data });
       setNewAddress((currNewAddress) => ({
         ...currNewAddress,
-        isAddingNewAddress: false,
+        isAddingNewAddress: '',
       }));
     } catch (e) {
       if (e.response) {
-        enqueueSnackbar(e.response.data.message, { variant: "error" });
+        enqueueSnackbar(e.response.data.message, { variant: 'error' });
       } else {
         enqueueSnackbar(
-          "Could not add this address. Check that the backend is running, reachable and returns valid JSON.",
+          'Could not add this address. Check that the backend is running, reachable and returns valid JSON.',
           {
-            variant: "error",
+            variant: 'error',
           }
         );
       }
@@ -343,15 +359,15 @@ const Checkout = () => {
           },
         }
       );
-      setAddresses({ all: response.data, selected: "" });
+      setAddresses({ all: response.data, selected: '' });
     } catch (e) {
       if (e.response) {
-        enqueueSnackbar(e.response.data.message, { variant: "error" });
+        enqueueSnackbar(e.response.data.message, { variant: 'error' });
       } else {
         enqueueSnackbar(
-          "Could not delete this address. Check that the backend is running, reachable and returns valid JSON.",
+          'Could not delete this address. Check that the backend is running, reachable and returns valid JSON.',
           {
-            variant: "error",
+            variant: 'error',
           }
         );
       }
@@ -386,22 +402,22 @@ const Checkout = () => {
   const validateRequest = (items, addresses) => {
     if (getTotalCartValue(items) > balance) {
       enqueueSnackbar(
-        "You do not have enough balance in your wallet for this purchase.",
+        'You do not have enough balance in your wallet for this purchase.',
         {
-          variant: "warning",
+          variant: 'warning',
         }
       );
       return false;
     }
     if (!addresses.all.length) {
-      enqueueSnackbar("Please add a new address before proceeding.", {
-        variant: "warning",
+      enqueueSnackbar('Please add a new address before proceeding.', {
+        variant: 'warning',
       });
       return false;
     }
     if (!addresses.selected) {
-      enqueueSnackbar("Please select one shipping address to proceed.", {
-        variant: "warning",
+      enqueueSnackbar('Please select one shipping address to proceed.', {
+        variant: 'warning',
       });
       return false;
     }
@@ -454,21 +470,39 @@ const Checkout = () => {
             },
           }
         );
-        if (response.status == 200) {
-          enqueueSnackbar("Checkout Successfully Done.", {
-            variant: "success",
+        if (response.status === 200) {
+          enqueueSnackbar('Checkout Successfully Done.', {
+            variant: 'success',
           });
-          localStorage.setItem("balance", balance - getTotalCartValue(items));
-          history.push("/thanks");
+          localStorage.setItem('balance', balance - getTotalCartValue(items));
+          history.push('/thanks');
         }
       } catch (error) {
         if (error.response && error.response.data) {
-          enqueueSnackbar(error.response.data.message, { variant: "error" });
+          enqueueSnackbar(error.response.data.message, { variant: 'error' });
         } else {
-          enqueueSnackbar("Something went wrong while checking out", {
-            variant: "error",
+          enqueueSnackbar('Something went wrong while checking out', {
+            variant: 'error',
           });
         }
+      }
+    }
+  };
+
+  const fetchReservations = async () => {
+    try {
+      const response = await axios.get(
+        'https://qtrip-backend.azurewebsites.net/reservations',
+        {}
+      );
+      setReservations(response.data);
+    } catch (error) {
+      if (error.response && error.response.data) {
+        enqueueSnackbar(error.response.data.message, { variant: 'error' });
+      } else {
+        enqueueSnackbar('Something went wrong while fetching reservations', {
+          variant: 'error',
+        });
       }
     }
   };
@@ -490,19 +524,20 @@ const Checkout = () => {
           setItems(cartDetails);
         }
         await getAddresses(token);
+        const reservations = await fetchReservations();
       };
       onLoadHandler();
     } else {
-      enqueueSnackbar("You must be logged in to access checkout page", {
-        variant: "warning",
+      enqueueSnackbar('You must be logged in to access checkout page', {
+        variant: 'warning',
       });
-      history.push("/login");
+      history.push('/login');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <>
+      {console.log(reservations)}
       <Header />
       <Grid container>
         <Grid item xs={12} md={9}>
@@ -525,8 +560,8 @@ const Checkout = () => {
                       key={id}
                       className={`address-item ${
                         addresses.selected === address._id
-                          ? "selected"
-                          : "not-selected"
+                          ? 'selected'
+                          : 'not-selected'
                       }`}
                       onClick={() =>
                         setAddresses({ ...addresses, selected: address._id })
@@ -560,20 +595,37 @@ const Checkout = () => {
                 addAddress={addAddress}
               />
             ) : (
-              <Button
-                color="primary"
-                variant="contained"
-                id="add-new-btn"
-                size="large"
-                onClick={() => {
-                  setNewAddress((currNewAddress) => ({
-                    ...currNewAddress,
-                    isAddingNewAddress: true,
-                  }));
-                }}
-              >
-                Add new address
-              </Button>
+              <Stack direction="row" spacing={2}>
+                <Button
+                  color="primary"
+                  variant="contained"
+                  id="add-new-btn"
+                  size="large"
+                  onClick={() => {
+                    setNewAddress((currNewAddress) => ({
+                      ...currNewAddress,
+                      isAddingNewAddress: 'address',
+                    }));
+                  }}
+                >
+                  Add new address
+                </Button>
+                <Box></Box>
+                <Button
+                  color="primary"
+                  variant="contained"
+                  id="add-new-btn"
+                  size="large"
+                  onClick={() => {
+                    setNewAddress((currNewAddress) => ({
+                      ...currNewAddress,
+                      isAddingNewAddress: 'QTrip ID',
+                    }));
+                  }}
+                >
+                  Add QTrip Resevation ID
+                </Button>
+              </Stack>
             )}
             <Typography color="#3C3C3C" variant="h4" my="1rem">
               Payment
